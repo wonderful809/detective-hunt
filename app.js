@@ -9,7 +9,44 @@ const defaultState = {
 };
 
 const defaultClueCodes = Array.from({ length: 8 }, (_, i) => `CLUE-${String(i + 1).padStart(2, "0")}`);
+const localClues = [
+  { code: "CLUE-01", title: "The Start", clue_text: "I have four legs but cannot walk. I stay outside while others talk. I’m the quietest seat in the greenest space—find the next clue at my resting place." },
+  { code: "CLUE-02", title: "Faraday's Block (Room 323)", clue_text: "Leave the grass and seek the spark, head to the block named after the man who tamed the dark. Ascend to the third level of this hive, and find the door where 300 meets 23." },
+  { code: "CLUE-03", title: "Vishveswara Seminar Hall", clue_text: "From the classroom to the grand stage. Seek the hall named after the Father of Indian Engineering. Where the mics are live and the speeches are tall, find the entrance to this scholarly hall." },
+  { code: "CLUE-04", title: "Canteen Water Filter", clue_text: "Brainpower requires hydration! Head to the hub of snacks and treats. Don't look at the tables or the seats—instead, find the silver flow that quenches every thirst. Your next hint is taped where the water comes first." },
+  { code: "CLUE-05", title: "The Coded Scooty (AP39FK7467)", clue_text: "To move forward, find the Master’s two-wheeled steed in the parking rows. Its identity is AP39FK7467. Find this metal horse to move forward." },
+  { code: "CLUE-06", title: "College Bus", clue_text: "The scooty is fast, but I carry the crowd. I’m big, I’m yellow, and I’m loud. Find the giant that takes you home every day; the next step is hidden near the Emergency Exit sign." },
+  { code: "CLUE-07", title: "Saraswati Stage (APJ Abdul Kalam Block)", clue_text: "Move from the wheels to the Wings of Fire. Seek the block named after the Missile Man. At the feet of the Goddess of Wisdom (Saraswati), on the platform where many have performed, your final trial begins." },
+  { code: "CLUE-08", title: "The Finale: Central Library (Luggage Area)", clue_text: "The hunt ends where knowledge is stored. Before entering the library, look at the Luggage Area pigeonholes and search for the locker containing the VLSI manual." }
+];
 let validClues = [...defaultClueCodes];
+const clueTextToCode = new Map();
+buildClueLookup(localClues);
+
+
+
+
+function normalizeTextKey(text) {
+  return String(text ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildClueLookup(clues) {
+  clueTextToCode.clear();
+  for (const clue of clues) {
+    const code = String(clue.code || "").toUpperCase();
+    if (!code) continue;
+
+    const titleKey = normalizeTextKey(clue.title);
+    const textKey = normalizeTextKey(clue.clue_text);
+
+    if (titleKey) clueTextToCode.set(titleKey, code);
+    if (textKey) clueTextToCode.set(textKey, code);
+  }
+}
 
 function normalizeClueNumber(raw) {
   const num = Number(raw);
@@ -22,6 +59,11 @@ function parseClueValue(rawValue) {
   if (!raw) return null;
 
   const upper = raw.toUpperCase();
+
+  const normalizedRaw = normalizeTextKey(raw);
+  if (clueTextToCode.has(normalizedRaw)) {
+    return clueTextToCode.get(normalizedRaw) || null;
+  }
 
   // Numeric-only format: 1..10
   if (/^\d{1,2}$/.test(upper)) {
@@ -66,6 +108,12 @@ function parseClueValue(rawValue) {
     }
   } catch {
     // Not JSON payload.
+  }
+
+  for (const [textKey, code] of clueTextToCode.entries()) {
+    if (textKey.length > 20 && normalizedRaw.includes(textKey)) {
+      return code;
+    }
   }
 
   return null;
@@ -121,9 +169,10 @@ async function supabaseRequest(path, options = {}) {
 async function loadCluesFromSupabase() {
   if (!hasSupabaseConfig()) return;
   try {
-    const data = await supabaseRequest("clues?select=code&order=code.asc");
+    const data = await supabaseRequest("clues?select=code,title,clue_text&order=code.asc");
     if (Array.isArray(data) && data.length) {
       validClues = data.map((x) => String(x.code).toUpperCase());
+      buildClueLookup(data);
     }
   } catch {
     scanMessage.textContent = "Supabase clue sync failed. Using local clues.";
