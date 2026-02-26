@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Etrons 2K26 Detective Hunt</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <header class="topbar">
+      <div>
+        <h1>Etrons 2K26 Detective Hunt</h1>
+        <p>Scan clues. Solve fast. Win smart.</p>
+      </div>
+      <div class="timer-card">
+        <span>Game Timer</span>
+        <strong id="gameTimer">00:00</strong>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card admin-panel">
+        <h2>Admin Controls</h2>
+        <p>Control the global timer shared with all teams.</p>
+        <div class="button-row">
+          <button id="startTimer" class="btn btn-primary">Start</button>
+          <button id="stopTimer" class="btn">Stop</button>
+          <button id="resetTimer" class="btn btn-danger">Refresh</button>
+        </div>
+        <div class="status-line">
+          <label>
+            User Invite Link
+            <input type="text" id="userLink" readonly />
+          </label>
+          <button id="copyLink" class="btn btn-small">Copy</button>
+        </div>
+      </section>
+
+      <section class="card team-panel">
+        <h2>Create Team (3–4 members)</h2>
+        <form id="teamForm" class="team-form">
+          <label>
+            Team Name
+            <input required maxlength="24" id="teamName" placeholder="Shadow Seekers" />
+          </label>
+          <label>
+            Members
+            <input required type="number" min="3" max="4" id="teamMembers" placeholder="3" />
+          </label>
+          <button class="btn btn-primary" type="submit">Add Team</button>
+        </form>
+        <small>Approx limit: 20 teams.</small>
+      </section>
+
+      <section class="card scan-panel">
+        <h2>Scan QR Clue</h2>
+        <p class="hint">Use mobile back camera to scan. For demo, paste scanned QR payload:</p>
+        <form id="scanForm" class="scan-form">
+          <label>
+            QR type
+            <select id="qrType">
+              <option value="text">Text QR</option>
+              <option value="image">Image QR</option>
+              <option value="emoji">Emoji QR</option>
+            </select>
+          </label>
+          <label>
+            Team
+            <select id="teamSelect" required></select>
+          </label>
+          <label>
+            Scanned text
+            <input id="scanInput" placeholder="Enter scanned clue text" />
+          </label>
+          <button class="btn btn-primary" type="submit">Submit Scan</button>
+        </form>
+        <p class="camera-note">📷 Mobile back camera support can be integrated by attaching this logic to an HTML5 QR scanner library.</p>
+      </section>
+
+      <section class="card leaderboard-panel">
+        <h2>Leaderboard</h2>
+        <p>Sorted by points (higher first), then faster time.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Team</th>
+              <th>Members</th>
+              <th>Points</th>
+              <th>Found Clues</th>
+              <th>Finish Time</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </section>
+
+      <section class="card clues-panel">
+        <h2>Valid QR Text Clues (10 total)</h2>
+        <ol id="clueList"></ol>
+      </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <dialog id="congratsDialog">
+      <h3>🎉 Congratulations!</h3>
+      <p>Correct clue scanned. +<span class="point">2</span> points added.</p>
+      <button id="closeDialog" class="btn btn-primary">Continue</button>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
