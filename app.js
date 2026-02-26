@@ -121,7 +121,8 @@ function parseClueValue(rawValue) {
 
 let stream;
 let detector;
-let autoScanInterval;
+let scanLoopRunning = false;
+let scanLoopLastAt = 0;
 
 function canUseBarcodeDetector() {
   return "BarcodeDetector" in window;
@@ -372,9 +373,35 @@ byId("manualBtn").addEventListener("click", () => {
 byId("closeDialog").addEventListener("click", () => successDialog.close());
 
 window.addEventListener("beforeunload", () => {
-  clearInterval(autoScanInterval);
+  scanLoopRunning = false;
   stream?.getTracks().forEach((t) => t.stop());
 });
+
+function stopScanLoop() {
+  scanLoopRunning = false;
+}
+
+async function runScanLoop() {
+  if (!scanLoopRunning) return;
+
+  const now = Date.now();
+  if (now - scanLoopLastAt >= 700) {
+    scanLoopLastAt = now;
+    const code = await detectFromVideo();
+    if (code) {
+      applyScan(code);
+    }
+  }
+
+  requestAnimationFrame(runScanLoop);
+}
+
+function startScanLoop() {
+  if (scanLoopRunning) return;
+  scanLoopRunning = true;
+  scanLoopLastAt = 0;
+  requestAnimationFrame(runScanLoop);
+}
 
 async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -411,20 +438,25 @@ async function startCamera() {
     return;
   }
 
-  byId("video").srcObject = stream;
-  await byId("video").play();
-  scanMessage.textContent = "Camera ready. Hold QR steady for auto-scan or tap Scan Current Frame.";
+  const videoEl = byId("video");
+  videoEl.srcObject = stream;
+  videoEl.setAttribute("playsinline", "true");
+  videoEl.muted = true;
+
+  try {
+    await videoEl.play();
+  } catch {
+    scanMessage.textContent = "Camera opened but preview play failed. Tap camera button again.";
+    return;
+  }
+
+  scanMessage.textContent = "Camera ready. Keep QR 15-25cm away in good light.";
 
   if (hasAnyQrDecoder()) {
     if (canUseBarcodeDetector()) {
       detector = detector ?? new BarcodeDetector({ formats: ["qr_code"] });
     }
-
-    clearInterval(autoScanInterval);
-    autoScanInterval = setInterval(async () => {
-      const code = await detectFromVideo();
-      if (code) applyScan(code);
-    }, 1200);
+    startScanLoop();
   } else {
     scanMessage.textContent = "QR decoder unavailable. Use Manual QR text input.";
   }
@@ -460,7 +492,19 @@ async function detectFromVideo() {
 
   if (canUseJsQr()) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+    let code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "attemptBoth"
+    });
+    if (code?.data) {
+      return code.data;
+    }
+
+    const cropW = Math.floor(canvas.width * 0.75);
+    const cropH = Math.floor(canvas.height * 0.75);
+    const sx = Math.floor((canvas.width - cropW) / 2);
+    const sy = Math.floor((canvas.height - cropH) / 2);
+    const cropData = ctx.getImageData(sx, sy, cropW, cropH);
+    code = window.jsQR(cropData.data, cropData.width, cropData.height, {
       inversionAttempts: "attemptBoth"
     });
     if (code?.data) {
@@ -541,7 +585,7 @@ if (isAdmin) {
   byId("resetBtn").addEventListener("click", () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(TEAM_KEY);
-    clearInterval(autoScanInterval);
+    stopScanLoop();
     stream?.getTracks().forEach((t) => t.stop());
     saveState(structuredClone(defaultState));
     render();

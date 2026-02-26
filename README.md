@@ -8,7 +8,7 @@ A mobile-friendly web app for a QR-based detective game.
 - Admin controls global timer: **start, stop, restart timer, refresh game**.
 - Leaderboard ranking: **higher points first**, and tie-break on **lower game time**.
 - QR clue validation and +2 points for each correct clue (supports clue code, URL payload, and full clue text from local set/Supabase).
-- Camera scan with `BarcodeDetector` + `jsQR` fallback.
+- Camera scan with `BarcodeDetector` + `jsQR` fallback and continuous requestAnimationFrame scan loop for better detection reliability.
 - Supabase sync for teams, clues, and scan logs.
 
 ## Supabase database setup
