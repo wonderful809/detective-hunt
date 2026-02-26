@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Etrons 2K26 • Detective Hunt</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <header class="app-header">
+    <h1>🕵️ Detective Hunt <span>Etrons 2K26</span></h1>
+    <p>Find the right clue QRs. Earn points. Win the hunt.</p>
+  </header>
+
+  <main class="layout">
+    <section id="adminPanel" class="card hidden">
+      <h2>Admin Control Room</h2>
+      <div class="admin-controls">
+        <button id="startBtn">▶ Start Timer</button>
+        <button id="stopBtn">⏸ Stop Timer</button>
+        <button id="resetBtn">🔄 Refresh Game</button>
+      </div>
+      <div class="admin-share">
+        <label>User link to share</label>
+        <div class="share-row">
+          <input id="userLink" readonly />
+          <button id="copyLinkBtn">Copy</button>
+        </div>
+      </div>
+      <p class="muted">Tip: open this page with <code>?mode=admin</code> for admin control.</p>
+    </section>
+
+    <section class="card">
+      <h2>Game Status</h2>
+      <div class="status-grid">
+        <div>
+          <p class="label">Global Timer</p>
+          <p id="timerDisplay" class="timer">00:00</p>
+        </div>
+        <div>
+          <p class="label">State</p>
+          <p id="timerState" class="state-pill">Stopped</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="teamPanel" class="card">
+      <h2>Create Team</h2>
+      <form id="teamForm">
+        <label>
+          Team Name
+          <input id="teamName" required maxlength="30" placeholder="e.g. Shadow Seekers" />
+        </label>
+        <label>
+          Number of Members (min 3, max 4)
+          <input id="memberCount" type="number" min="3" max="4" required />
+        </label>
+        <button type="submit">Create Team</button>
+      </form>
+      <p id="teamError" class="error"></p>
+    </section>
+
+    <section id="scannerPanel" class="card hidden">
+      <h2>Scan Clue QR</h2>
+      <p id="teamInfo"></p>
+      <video id="video" playsinline></video>
+      <div class="scanner-actions">
+        <button id="cameraBtn">📷 Use Back Camera</button>
+        <button id="scanBtn">Scan Current Frame</button>
+      </div>
+      <label>
+        Manual QR text (backup)
+        <input id="manualValue" placeholder="Paste decoded QR text" />
+      </label>
+      <button id="manualBtn">Submit QR Text</button>
+      <p id="scanMessage" class="muted"></p>
+      <p class="hint">Valid text clue format: <code>CLUE-01</code> to <code>CLUE-10</code></p>
+    </section>
+
+    <section class="card">
+      <h2>Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Team</th>
+            <th>Members</th>
+            <th>Points</th>
+            <th>Last Correct Time</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <dialog id="successDialog">
+    <h3>🎉 Congratulations!</h3>
+    <p>Correct clue scanned. +<span class="points">2 points</span></p>
+    <button id="closeDialog">Continue Hunt</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
